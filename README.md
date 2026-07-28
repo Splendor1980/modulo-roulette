@@ -1,4 +1,4 @@
-# Modulo — provably fair multiplayer roulette (testnet MVP)
+# Modulo - provably fair multiplayer roulette (testnet MVP)
 
 A multiplayer European roulette table, built to eventually sit on the
 Retium blockchain testnet. Right now Retium's public SDK isn't out yet
