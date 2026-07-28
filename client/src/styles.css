@@ -108,10 +108,14 @@ a { color: var(--brass-light); }
 }
 
 .panel {
-  background: var(--felt);
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(255,255,255,0.03), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 6px),
+    var(--felt);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 18px;
+  box-shadow: inset 0 0 0 6px #0b1512, inset 0 0 40px rgba(0,0,0,0.35), 0 10px 30px rgba(0,0,0,0.35);
 }
 
 .panel + .panel { margin-top: 18px; }
@@ -129,8 +133,24 @@ a { color: var(--brass-light); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0 6px;
+  padding: 20px 0 6px;
   position: relative;
+}
+
+.wheel-rail {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a2416, #1c1108 70%);
+  box-shadow:
+    0 0 0 3px #0a0603,
+    0 14px 26px rgba(0,0,0,0.5),
+    inset 0 0 0 6px #4a2f18,
+    inset 0 0 20px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wheel-pointer {
@@ -187,15 +207,17 @@ a { color: var(--brass-light); }
   margin-top: 18px;
 }
 .cell {
+  position: relative;
   font-family: var(--font-mono);
   font-size: 0.82rem;
   text-align: center;
   padding: 10px 2px;
   border-radius: 6px;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1px solid rgba(0,0,0,0.4);
   user-select: none;
   transition: transform 0.08s ease, border-color 0.15s ease;
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .cell:hover { border-color: var(--brass); transform: translateY(-1px); }
 .cell.red { background: var(--signal); }
@@ -211,28 +233,71 @@ a { color: var(--brass-light); }
 
 .chip-tray {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-top: 16px;
   flex-wrap: wrap;
 }
 .chip {
   font-family: var(--font-mono);
-  width: 46px;
-  height: 46px;
+  font-weight: 600;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 2px dashed var(--brass);
   color: var(--brass-light);
-  background: var(--ink);
+  background:
+    radial-gradient(circle at 38% 32%, #1c2a25, var(--ink) 65%),
+    repeating-conic-gradient(var(--brass) 0deg 18deg, transparent 18deg 36deg);
+  border: 2px solid #0a0f0d;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 0.78rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 0 0 5px var(--ink);
+  transition: transform 0.12s ease;
 }
+.chip:hover { transform: translateY(-2px); }
 .chip.selected {
-  background: var(--brass);
-  color: var(--ink);
-  border-style: solid;
+  box-shadow: 0 0 0 2px var(--brass-light), 0 4px 10px rgba(201,162,39,0.4), inset 0 0 0 5px var(--ink);
+  transform: translateY(-3px);
+}
+
+.ball-track {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  transition: transform 3.3s cubic-bezier(0.1, 0.7, 0.25, 1);
+}
+.ball {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff, #cfcfcf 70%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  transform-origin: 0 0;
+}
+
+.bet-marker {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--brass) 0deg 20deg, var(--ink) 20deg 40deg);
+  border: 1px solid var(--brass-light);
+  font-size: 0.5rem;
+  color: var(--brass-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .actions { display: flex; gap: 10px; margin-top: 14px; }
@@ -290,4 +355,24 @@ a { color: var(--brass-light); }
   border-radius: 8px;
   font-size: 0.82rem;
   font-family: var(--font-mono);
+}
+
+.chain-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--bone-dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-top: 8px;
+}
+.chain-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--verify);
+  box-shadow: 0 0 6px var(--verify);
 }

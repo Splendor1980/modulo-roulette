@@ -21,6 +21,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [lastResult, setLastResult] = useState(null);
   const [spinning, setSpinning] = useState(false);
+  const [myBets, setMyBets] = useState([]);
 
   useEffect(() => {
     socket.connect();
@@ -35,7 +36,10 @@ export default function App() {
 
     socket.on("table_state", (s) => setState(s));
     socket.on("player_list", (p) => setPlayers(p));
-    socket.on("phase_change", (p) => setState((prev) => (prev ? { ...prev, ...p } : prev)));
+    socket.on("phase_change", (p) => {
+      setState((prev) => (prev ? { ...prev, ...p } : prev));
+      if (p.phase === "spinning") setMyBets([]);
+    });
     socket.on("spin_result", (r) => {
       setLastResult(r);
       setSpinning(true);
@@ -65,6 +69,7 @@ export default function App() {
     socket.emit("place_bet", { type, payload, amount: selectedChip }, (ack) => {
       if (ack?.ok) {
         setBalance(ack.balance);
+        setMyBets((prev) => [...prev, { type, payload, amount: selectedChip }]);
       } else {
         setToast(ack?.error || "bet rejected");
       }
@@ -80,6 +85,10 @@ export default function App() {
         <div>
           <h1>Modulo</h1>
           <div className="tagline">provably fair roulette — Retium testnet, no real funds</div>
+          <div className="chain-badge">
+            <span className="dot" />
+            Built for the Retium blockchain (testnet, not officially affiliated)
+          </div>
         </div>
         {balance != null && <div className="balance-pill">{balance} test chips</div>}
       </div>
@@ -104,12 +113,12 @@ export default function App() {
             </div>
 
             <ChipTray selected={selectedChip} onSelect={setSelectedChip} />
-            <Board onBet={placeBet} disabled={phase !== "betting"} />
+            <Board onBet={placeBet} disabled={phase !== "betting"} myBets={myBets} />
 
             <div className="actions">
               <button
                 className="btn ghost"
-                onClick={() => socket.emit("clear_bets", {}, () => {})}
+                onClick={() => socket.emit("clear_bets", {}, () => setMyBets([]))}
               >
                 Clear my bets
               </button>
