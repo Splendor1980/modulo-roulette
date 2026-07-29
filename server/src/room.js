@@ -28,7 +28,26 @@ export class Room {
   }
 
   broadcastState() {
-    this.io.to(this.id).emit("table_state", this.publicState());
+    // Debounced: many bets can land in the same instant under load, and
+    // broadcasting the full room state on every single one is the actual
+    // O(N^2) cost that hurts at higher concurrency. Coalesce bursts into at
+    // most one broadcast per ~120ms instead.
+    if (this._broadcastTimer) return;
+    this._broadcastTimer = setTimeout(() => {
+      this._broadcastTimer = null;
+      this.io.to(this.id).emit("table_state", this.publicState());
+    }, 120);
+  }
+
+  broadcastPlayerList() {
+    // Same debounce pattern — a burst of joins/disconnects (e.g. a stampede
+    // right as a table opens) was the other O(N^2) hotspot.
+    if (this._playerListTimer) return;
+    this._playerListTimer = setTimeout(() => {
+      this._playerListTimer = null;
+      const list = this.connectedUserIds().map((uid) => ({ userId: uid, name: this.userNames.get(uid) }));
+      this.io.to(this.id).emit("player_list", list);
+    }, 120);
   }
 
   connectedUserIds() {
@@ -182,6 +201,8 @@ export class Room {
 
   destroy() {
     clearTimeout(this.timer);
+    clearTimeout(this._broadcastTimer);
+    clearTimeout(this._playerListTimer);
   }
 }
 

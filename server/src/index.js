@@ -46,7 +46,7 @@ io.on("connection", (socket) => {
       const { balance, myBets } = await room.addPlayer(socket.id, { userId, name: name || "Player" });
       socket.join(tableId);
       ack?.({ ok: true, userId, balance, myBets, state: room.publicState() });
-      io.to(tableId).emit("player_list", room.connectedUserIds().map((uid) => ({ userId: uid, name: room.userNames.get(uid) })));
+      room.broadcastPlayerList();
     } catch (err) {
       ack?.({ ok: false, error: err.message });
     }
@@ -76,7 +76,7 @@ io.on("connection", (socket) => {
     if (!currentTableId) return;
     const room = getOrCreateRoom(currentTableId, io);
     room.removePlayer(socket.id);
-    io.to(currentTableId).emit("player_list", room.connectedUserIds().map((uid) => ({ userId: uid, name: room.userNames.get(uid) })));
+    room.broadcastPlayerList();
   });
 });
 
