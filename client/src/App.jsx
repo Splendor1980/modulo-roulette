@@ -87,27 +87,27 @@ export default function App() {
       if (p.phase === "betting") setLastRoundOutcome(null); // clear once a new round opens
     });
     socket.on("spin_result", (r) => {
-      // eslint-disable-next-line no-console
-      console.log("[modulo debug] spin_result received:", r);
       setLastResult(r);
       setSpinning(true);
       const mine = r.payouts?.find((p) => p.userId === myUserIdRef.current);
-      // eslint-disable-next-line no-console
-      console.log("[modulo debug] myUserId:", myUserIdRef.current, "matched payout:", mine);
       const winningBets = mine?.details?.filter((d) => d.win) || [];
-      const won = winningBets.length > 0;
-      setWonLastRound(won);
+      const anyHit = winningBets.length > 0;
+      const netPositive = Boolean(mine && mine.net > 0);
+      setWonLastRound(netPositive); // confetti is reserved for an actual net gain
       if (mine) {
-        setLastRoundOutcome({ net: mine.net, won });
+        setLastRoundOutcome({ net: mine.net, netPositive, hitDesc: anyHit ? winningBets.map(describeBet).join(", ") : null });
       } else {
         setLastRoundOutcome(null);
       }
-      if (won) {
-        const desc = winningBets.map(describeBet).join(", ");
-        const netStr = mine.net >= 0 ? `net +${mine.net}` : `net ${mine.net}`;
+      if (netPositive) {
         setToast({
-          message: `🎉 ${desc} hit on ${r.number} (${r.color}) — ${netStr} chips this round`,
+          message: `🎉 ${winningBets.map(describeBet).join(", ")} hit on ${r.number} (${r.color}) — net +${mine.net} chips`,
           type: "win"
+        });
+      } else if (anyHit) {
+        setToast({
+          message: `${winningBets.map(describeBet).join(", ")} hit on ${r.number} (${r.color}), but net ${mine.net} chips this round`,
+          type: "info"
         });
       }
     });
@@ -179,8 +179,11 @@ export default function App() {
                 </>
               )}
               {lastRoundOutcome && (
-                <span className={`outcome-badge ${lastRoundOutcome.won ? "win" : "lose"}`}>
+                <span className={`outcome-badge ${lastRoundOutcome.netPositive ? "win" : "lose"}`}>
                   {lastRoundOutcome.net >= 0 ? `+${lastRoundOutcome.net}` : lastRoundOutcome.net} chips
+                  {lastRoundOutcome.hitDesc && !lastRoundOutcome.netPositive && (
+                    <span className="hit-note"> ({lastRoundOutcome.hitDesc} hit)</span>
+                  )}
                 </span>
               )}
             </div>
@@ -205,7 +208,7 @@ export default function App() {
         </div>
       </div>
 
-      {toast && <div className={`toast ${toast.type === "win" ? "win" : ""}`}>{toast.message}</div>}
+      {toast && <div className={`toast ${toast.type || ""}`}>{toast.message}</div>}
     </div>
   );
 }

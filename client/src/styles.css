@@ -477,3 +477,13 @@ a { color: var(--brass-light); }
   background: rgba(224, 71, 90, 0.14);
   color: var(--signal);
 }
+
+.hit-note {
+  font-weight: 400;
+  opacity: 0.85;
+  font-size: 0.75em;
+}
+.toast.info {
+  border-color: var(--teal);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.25);
+}
