@@ -56,17 +56,27 @@ export default function App() {
   const [wonLastRound, setWonLastRound] = useState(false);
 
   useEffect(() => {
+    function join() {
+      const storedUserId = localStorage.getItem("modulo_user_id");
+      const storedName = localStorage.getItem("modulo_name") || randomName();
+      localStorage.setItem("modulo_name", storedName);
+
+      socket.emit("join_table", { tableId: "table-1", name: storedName, userId: storedUserId }, (ack) => {
+        if (ack?.ok) {
+          setBalance(ack.balance);
+          setMyUserId(ack.userId);
+          myUserIdRef.current = ack.userId;
+          localStorage.setItem("modulo_user_id", ack.userId);
+          setState(ack.state);
+          setMyBets(ack.myBets || []);
+        } else {
+          setToast({ message: ack?.error || "could not join table", type: "error" });
+        }
+      });
+    }
+
+    socket.on("connect", join); // fires on first connect AND every reconnect
     socket.connect();
-    socket.emit("join_table", { tableId: "table-1", name: randomName() }, (ack) => {
-      if (ack?.ok) {
-        setBalance(ack.balance);
-        setMyUserId(ack.userId);
-        myUserIdRef.current = ack.userId;
-        setState(ack.state);
-      } else {
-        setToast({ message: ack?.error || "could not join table", type: "error" });
-      }
-    });
 
     socket.on("table_state", (s) => setState(s));
     socket.on("player_list", (p) => setPlayers(p));
@@ -92,6 +102,7 @@ export default function App() {
     });
 
     return () => {
+      socket.off("connect", join);
       socket.off("table_state");
       socket.off("player_list");
       socket.off("phase_change");

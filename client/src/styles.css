@@ -123,9 +123,10 @@ a { color: var(--brass-light); }
   box-shadow:
     inset 0 0 0 6px #0b1512,
     inset 0 0 40px rgba(0,0,0,0.35),
-    0 10px 30px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(201,162,39,0.15),
-    0 0 50px rgba(201,162,39,0.16);
+    0 10px 30px rgba(0,0,0,0.5),
+    0 0 0 1.5px rgba(228,199,103,0.55),
+    0 0 40px 4px rgba(201,162,39,0.45),
+    0 0 90px 10px rgba(201,162,39,0.22);
 }
 
 .panel + .panel { margin-top: 18px; }
@@ -212,7 +213,7 @@ a { color: var(--brass-light); }
 /* --- board --- */
 .board {
   display: grid;
-  grid-template-columns: 46px repeat(11, 1fr 10px) 1fr;
+  grid-template-columns: 46px repeat(11, 1fr 10px) 1fr 10px 56px;
   grid-template-rows: repeat(2, 1fr 10px) 1fr;
   gap: 0;
   margin-top: 18px;
@@ -249,7 +250,7 @@ a { color: var(--brass-light); }
 .outside-row.evens .cell.outside:not(.red):not(.black) {
   background: linear-gradient(155deg, rgba(160, 130, 220, 0.28), var(--felt-light));
 }
-.outside-row { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 4px; }
+.outside-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 4px; margin-left: 46px; }
 .outside-row.six { grid-template-columns: repeat(6, 1fr); }
 
 .chip-tray {
@@ -448,4 +449,13 @@ a { color: var(--brass-light); }
       scale(1);
     opacity: 0;
   }
+}
+
+.col-strip {
+  background: linear-gradient(155deg, rgba(45, 212, 191, 0.26), var(--felt-light));
+  color: var(--bone);
+  font-size: 0.68rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

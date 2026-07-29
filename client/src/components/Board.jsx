@@ -68,6 +68,16 @@ export default function Board({ onBet, disabled, myBets = [] }) {
     }
   }
 
+  // Column bets, shown as a vertical "2:1" strip to the right of the grid —
+  // one box per row, matching how a real table lays them out (rather than a
+  // horizontal row, which reads confusingly next to the dozens).
+  const columnStrip = [0, 1, 2].map((row) => ({
+    // row0 (top, multiples of 3) = column 3; row1 = column 2; row2 (bottom) = column 1
+    column: 3 - row,
+    gridColumn: 26,
+    gridRow: 2 * row + 1
+  }));
+
   return (
     <div>
       <div className="board">
@@ -112,17 +122,24 @@ export default function Board({ onBet, disabled, myBets = [] }) {
             <Marker amount={totals[betKey("corner", payload)]} />
           </div>
         ))}
+        {columnStrip.map(({ column, gridColumn, gridRow }) => (
+          <div
+            key={`col-${column}`}
+            className="cell col-strip"
+            title={`Column ${column} (2:1)`}
+            style={{ gridColumn, gridRow }}
+            onClick={() => !disabled && onBet("column", column)}
+          >
+            2:1
+            <Marker amount={totals[betKey("column", column)]} />
+          </div>
+        ))}
       </div>
 
       <div className="outside-row dozens">
         <div className="cell outside" onClick={() => !disabled && onBet("dozen", 1)}>1st 12<Marker amount={totals[betKey("dozen", 1)]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("dozen", 2)}>2nd 12<Marker amount={totals[betKey("dozen", 2)]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("dozen", 3)}>3rd 12<Marker amount={totals[betKey("dozen", 3)]} /></div>
-      </div>
-      <div className="outside-row columns">
-        <div className="cell outside" onClick={() => !disabled && onBet("column", 1)}>Column 1<Marker amount={totals[betKey("column", 1)]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("column", 2)}>Column 2<Marker amount={totals[betKey("column", 2)]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("column", 3)}>Column 3<Marker amount={totals[betKey("column", 3)]} /></div>
       </div>
       <div className="outside-row six evens">
         <div className="cell outside" onClick={() => !disabled && onBet("low")}>1–18<Marker amount={totals[betKey("low")]} /></div>

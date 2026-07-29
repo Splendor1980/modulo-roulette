@@ -15,7 +15,9 @@ export class Room {
   constructor(id, io) {
     this.id = id;
     this.io = io;
-    this.players = new Map(); // socketId -> { userId, name, bets: [] }
+    this.socketToUser = new Map(); // socketId -> userId (who is currently connected as)
+    this.userNames = new Map(); // userId -> display name (persists across reconnects)
+    this.userBets = new Map(); // userId -> bets[] for the current round (persists across reconnects)
     this.round = 0;
     this.phase = "betting";
     this.phaseEndsAt = Date.now() + PHASE_DURATIONS.betting;
@@ -23,11 +25,14 @@ export class Room {
     this.commitment = createCommitment();
     this.clientSeed = "modulo-default-seed"; // TODO: let players contribute entropy
     this.timer = setTimeout(() => this.advancePhase(), PHASE_DURATIONS.betting);
-    this.pendingReveal = null; // previous round's serverSeed, revealed at start of next betting phase
   }
 
   broadcastState() {
     this.io.to(this.id).emit("table_state", this.publicState());
+  }
+
+  connectedUserIds() {
+    return [...new Set(this.socketToUser.values())];
   }
 
   publicState() {
@@ -37,24 +42,33 @@ export class Room {
       phase: this.phase,
       phaseEndsAt: this.phaseEndsAt,
       commitHash: this.commitment.commitHash,
-      players: [...this.players.values()].map((p) => ({
-        userId: p.userId,
-        name: p.name,
-        betCount: p.bets.length,
-        betTotal: p.bets.reduce((s, b) => s + b.amount, 0)
-      })),
+      players: this.connectedUserIds().map((userId) => {
+        const bets = this.userBets.get(userId) || [];
+        return {
+          userId,
+          name: this.userNames.get(userId) || "Player",
+          betCount: bets.length,
+          betTotal: bets.reduce((s, b) => s + b.amount, 0)
+        };
+      }),
       history: this.history
     };
   }
 
   async addPlayer(socketId, { userId, name }) {
     const balance = await chain.getBalance(userId);
-    this.players.set(socketId, { userId, name, bets: [] });
-    return balance;
+    this.socketToUser.set(socketId, userId);
+    this.userNames.set(userId, name);
+    if (!this.userBets.has(userId)) this.userBets.set(userId, []);
+    return { balance, myBets: this.userBets.get(userId) };
   }
 
   removePlayer(socketId) {
-    this.players.delete(socketId);
+    // Only drop the connection mapping — keep the user's bets and name so a
+    // reconnect (or a stray disconnect right before a spin) doesn't wipe out
+    // a bet that was already placed. settleRound() below settles by userId,
+    // not by live socket, so a disconnected player's bet still resolves.
+    this.socketToUser.delete(socketId);
   }
 
   async placeBet(socketId, bet) {
@@ -64,21 +78,23 @@ export class Room {
     if (!isValidBet(bet)) {
       throw new Error("invalid bet");
     }
-    const player = this.players.get(socketId);
-    if (!player) throw new Error("not seated at this table");
+    const userId = this.socketToUser.get(socketId);
+    if (!userId) throw new Error("not seated at this table");
 
-    const balance = await chain.getBalance(player.userId);
-    const staked = player.bets.reduce((s, b) => s + b.amount, 0);
+    const balance = await chain.getBalance(userId);
+    const bets = this.userBets.get(userId) || [];
+    const staked = bets.reduce((s, b) => s + b.amount, 0);
     if (staked + bet.amount > balance) {
       throw new Error("insufficient balance");
     }
-    player.bets.push(bet);
+    bets.push(bet);
+    this.userBets.set(userId, bets);
     return { balance, staked: staked + bet.amount };
   }
 
   clearBets(socketId) {
-    const player = this.players.get(socketId);
-    if (player) player.bets = [];
+    const userId = this.socketToUser.get(socketId);
+    if (userId) this.userBets.set(userId, []);
   }
 
   advancePhase() {
@@ -110,15 +126,25 @@ export class Room {
     const color = colorOf(number);
 
     const payoutSummaries = [];
-    for (const [socketId, player] of this.players.entries()) {
-      if (player.bets.length === 0) continue;
-      const { totalStaked, totalReturned, net, details } = resolveBets(player.bets, number);
-      await chain.debit(player.userId, totalStaked);
-      if (totalReturned > 0) await chain.credit(player.userId, totalReturned);
-      const balance = await chain.getBalance(player.userId);
-      payoutSummaries.push({ userId: player.userId, name: player.name, totalStaked, totalReturned, net, balance, details });
-      player.bets = [];
+    // Settle by userId, not by live socket — a player who briefly
+    // disconnected still gets their bet resolved correctly.
+    for (const [userId, bets] of this.userBets.entries()) {
+      if (bets.length === 0) continue;
+      const { totalStaked, totalReturned, net, details } = resolveBets(bets, number);
+      await chain.debit(userId, totalStaked);
+      if (totalReturned > 0) await chain.credit(userId, totalReturned);
+      const balance = await chain.getBalance(userId);
+      payoutSummaries.push({
+        userId,
+        name: this.userNames.get(userId) || "Player",
+        totalStaked,
+        totalReturned,
+        net,
+        balance,
+        details
+      });
     }
+    this.userBets.clear();
 
     const roundRecord = {
       round: this.round,
