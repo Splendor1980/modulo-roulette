@@ -233,6 +233,8 @@ a { color: var(--brass-light); }
   background: var(--felt-light);
   color: var(--bone);
 }
+.cell.outside.red { background: linear-gradient(155deg, var(--signal), #b23244); }
+.cell.outside.black { background: linear-gradient(155deg, #322650, var(--noir)); }
 .outside-row.dozens .cell.outside {
   background: linear-gradient(155deg, rgba(201, 162, 39, 0.32), var(--felt-light));
 }
@@ -369,6 +371,10 @@ a { color: var(--brass-light); }
   border-radius: 8px;
   font-size: 0.82rem;
   font-family: var(--font-mono);
+}
+.toast.win {
+  border-color: var(--verify);
+  box-shadow: 0 0 16px rgba(47, 191, 130, 0.35);
 }
 
 .chain-badge {

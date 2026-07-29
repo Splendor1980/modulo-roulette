@@ -35,7 +35,7 @@ export default function App() {
         myUserIdRef.current = ack.userId;
         setState(ack.state);
       } else {
-        setToast(ack?.error || "could not join table");
+        setToast({ message: ack?.error || "could not join table", type: "error" });
       }
     });
 
@@ -49,7 +49,11 @@ export default function App() {
       setLastResult(r);
       setSpinning(true);
       const mine = r.payouts?.find((p) => p.userId === myUserIdRef.current);
-      setWonLastRound(Boolean(mine && mine.net > 0));
+      const won = Boolean(mine && mine.net > 0);
+      setWonLastRound(won);
+      if (won) {
+        setToast({ message: `🎉 Won ${mine.net} chips on ${r.number} (${r.color})`, type: "win" });
+      }
     });
 
     return () => {
@@ -78,7 +82,7 @@ export default function App() {
         setBalance(ack.balance);
         setMyBets((prev) => [...prev, { type, payload, amount: selectedChip }]);
       } else {
-        setToast(ack?.error || "bet rejected");
+        setToast({ message: ack?.error || "bet rejected", type: "error" });
       }
     });
   }
@@ -139,7 +143,7 @@ export default function App() {
         </div>
       </div>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className={`toast ${toast.type === "win" ? "win" : ""}`}>{toast.message}</div>}
     </div>
   );
 }
