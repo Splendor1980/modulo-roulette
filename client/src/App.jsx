@@ -54,6 +54,7 @@ export default function App() {
   const [myUserId, setMyUserId] = useState(null);
   const myUserIdRef = useRef(null);
   const [wonLastRound, setWonLastRound] = useState(false);
+  const [lastRoundOutcome, setLastRoundOutcome] = useState(null); // { net, desc } | null
 
   useEffect(() => {
     function join() {
@@ -83,6 +84,7 @@ export default function App() {
     socket.on("phase_change", (p) => {
       setState((prev) => (prev ? { ...prev, ...p } : prev));
       if (p.phase === "spinning") setMyBets([]);
+      if (p.phase === "betting") setLastRoundOutcome(null); // clear once a new round opens
     });
     socket.on("spin_result", (r) => {
       setLastResult(r);
@@ -91,6 +93,11 @@ export default function App() {
       const winningBets = mine?.details?.filter((d) => d.win) || [];
       const won = winningBets.length > 0;
       setWonLastRound(won);
+      if (mine) {
+        setLastRoundOutcome({ net: mine.net, won });
+      } else {
+        setLastRoundOutcome(null);
+      }
       if (won) {
         const desc = winningBets.map(describeBet).join(", ");
         const netStr = mine.net >= 0 ? `net +${mine.net}` : `net ${mine.net}`;
@@ -166,6 +173,11 @@ export default function App() {
                   {" "}· last:{" "}
                   <span className={`result-badge ${lastResult.color}`}>{lastResult.number}</span>
                 </>
+              )}
+              {lastRoundOutcome && (
+                <span className={`outcome-badge ${lastRoundOutcome.won ? "win" : "lose"}`}>
+                  {lastRoundOutcome.net >= 0 ? `+${lastRoundOutcome.net}` : lastRoundOutcome.net} chips
+                </span>
               )}
             </div>
 

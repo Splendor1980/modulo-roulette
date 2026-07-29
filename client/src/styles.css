@@ -459,3 +459,21 @@ a { color: var(--brass-light); }
   align-items: center;
   justify-content: center;
 }
+
+.outcome-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.outcome-badge.win {
+  background: rgba(47, 191, 130, 0.18);
+  color: var(--verify);
+  box-shadow: 0 0 10px rgba(47, 191, 130, 0.35);
+}
+.outcome-badge.lose {
+  background: rgba(224, 71, 90, 0.14);
+  color: var(--signal);
+}
