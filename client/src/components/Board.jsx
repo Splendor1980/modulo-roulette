@@ -6,6 +6,9 @@ function colorClass(n) {
 }
 
 function betKey(type, payload) {
+  if (Array.isArray(payload)) {
+    return `${type}:${[...payload].sort((a, b) => a - b).join(",")}`;
+  }
   return payload == null ? type : `${type}:${payload}`;
 }
 
@@ -25,20 +28,52 @@ function Marker({ amount }) {
 
 export default function Board({ onBet, disabled, myBets = [] }) {
   const totals = totalsByKey(myBets);
+
   const numberCells = [];
   for (let col = 1; col <= 12; col++) {
     for (let row = 0; row < 3; row++) {
       const n = 3 * col - row;
-      numberCells.push({ n, gridColumn: col + 1, gridRow: row + 1 });
+      numberCells.push({ n, gridColumn: 2 * col, gridRow: 2 * row + 1 });
+    }
+  }
+
+  // Split bets: adjacent numbers, horizontal (between columns) and vertical
+  // (between rows). Splits touching 0 are intentionally left out for now —
+  // straight-up on 0 still works.
+  const splits = [];
+  for (let col = 1; col <= 11; col++) {
+    for (let row = 0; row < 3; row++) {
+      const a = 3 * col - row;
+      const b = 3 * (col + 1) - row;
+      splits.push({ payload: [a, b], gridColumn: 2 * col + 1, gridRow: 2 * row + 1 });
+    }
+  }
+  for (let col = 1; col <= 12; col++) {
+    for (let row = 0; row < 2; row++) {
+      const a = 3 * col - row;
+      const b = 3 * col - (row + 1);
+      splits.push({ payload: [a, b], gridColumn: 2 * col, gridRow: 2 * row + 2 });
+    }
+  }
+
+  // Corner bets: four numbers meeting at one point.
+  const corners = [];
+  for (let col = 1; col <= 11; col++) {
+    for (let row = 0; row < 2; row++) {
+      const a = 3 * col - row;
+      const b = 3 * (col + 1) - row;
+      const c = 3 * col - (row + 1);
+      const d = 3 * (col + 1) - (row + 1);
+      corners.push({ payload: [a, b, c, d], gridColumn: 2 * col + 1, gridRow: 2 * row + 2 });
     }
   }
 
   return (
     <div>
-      <div className="board" style={{ gridTemplateRows: "repeat(3, 1fr)" }}>
+      <div className="board">
         <div
           className="cell green"
-          style={{ gridColumn: 1, gridRow: "1 / span 3" }}
+          style={{ gridColumn: 1, gridRow: "1 / -1" }}
           onClick={() => !disabled && onBet("straight", 0)}
         >
           0
@@ -53,6 +88,28 @@ export default function Board({ onBet, disabled, myBets = [] }) {
           >
             {n}
             <Marker amount={totals[betKey("straight", n)]} />
+          </div>
+        ))}
+        {splits.map(({ payload, gridColumn, gridRow }) => (
+          <div
+            key={`split-${payload.join("-")}`}
+            className="hotspot"
+            title={`Split ${payload.join(" / ")}`}
+            style={{ gridColumn, gridRow }}
+            onClick={() => !disabled && onBet("split", payload)}
+          >
+            <Marker amount={totals[betKey("split", payload)]} />
+          </div>
+        ))}
+        {corners.map(({ payload, gridColumn, gridRow }) => (
+          <div
+            key={`corner-${payload.join("-")}`}
+            className="hotspot corner"
+            title={`Corner ${payload.join(" / ")}`}
+            style={{ gridColumn, gridRow }}
+            onClick={() => !disabled && onBet("corner", payload)}
+          >
+            <Marker amount={totals[betKey("corner", payload)]} />
           </div>
         ))}
       </div>

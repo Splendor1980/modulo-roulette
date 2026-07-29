@@ -202,8 +202,9 @@ a { color: var(--brass-light); }
 /* --- board --- */
 .board {
   display: grid;
-  grid-template-columns: 46px repeat(12, 1fr);
-  gap: 4px;
+  grid-template-columns: 46px repeat(11, 1fr 10px) 1fr;
+  grid-template-rows: repeat(2, 1fr 10px) 1fr;
+  gap: 0;
   margin-top: 18px;
 }
 .cell {
@@ -224,7 +225,6 @@ a { color: var(--brass-light); }
 .cell.black { background: #16261f; }
 .cell.green { background: var(--verify); color: var(--ink); grid-row: span 3; display: flex; align-items: center; justify-content: center; }
 .cell.outside {
-  grid-column: span 4;
   background: var(--felt-light);
   color: var(--bone);
 }
@@ -375,4 +375,25 @@ a { color: var(--brass-light); }
   border-radius: 50%;
   background: var(--verify);
   box-shadow: 0 0 6px var(--verify);
+}
+
+.hotspot {
+  position: relative;
+  cursor: pointer;
+  border-radius: 3px;
+  background: transparent;
+}
+.hotspot:hover {
+  background: rgba(201, 162, 39, 0.35);
+}
+.hotspot.corner {
+  border-radius: 50%;
+}
+.hotspot .bet-marker {
+  width: 14px;
+  height: 14px;
+  right: 50%;
+  bottom: 50%;
+  transform: translate(50%, 50%);
+  font-size: 0.42rem;
 }

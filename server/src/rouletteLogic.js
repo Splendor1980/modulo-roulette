@@ -12,11 +12,14 @@ export function colorOf(number) {
 }
 
 // Bet shape: { type, payload, amount }
-// type one of: "straight" | "red" | "black" | "odd" | "even" | "low" | "high"
-//            | "dozen" | "column"
-// payload: straight -> number (0-36); dozen -> 1|2|3; column -> 1|2|3
+// type one of: "straight" | "split" | "corner" | "red" | "black" | "odd" | "even"
+//            | "low" | "high" | "dozen" | "column"
+// payload: straight -> number (0-36); split -> [n1, n2]; corner -> [n1,n2,n3,n4];
+//          dozen -> 1|2|3; column -> 1|2|3
 export const PAYOUTS = {
   straight: 35,
+  split: 17,
+  corner: 8,
   red: 1,
   black: 1,
   odd: 1,
@@ -27,11 +30,29 @@ export const PAYOUTS = {
   column: 2
 };
 
+function isValidNumber(n) {
+  return Number.isInteger(n) && n >= 0 && n <= 36;
+}
+
 export function isValidBet(bet) {
   if (!bet || typeof bet.amount !== "number" || bet.amount <= 0) return false;
   switch (bet.type) {
     case "straight":
-      return Number.isInteger(bet.payload) && bet.payload >= 0 && bet.payload <= 36;
+      return isValidNumber(bet.payload);
+    case "split":
+      return (
+        Array.isArray(bet.payload) &&
+        bet.payload.length === 2 &&
+        bet.payload.every(isValidNumber) &&
+        new Set(bet.payload).size === 2
+      );
+    case "corner":
+      return (
+        Array.isArray(bet.payload) &&
+        bet.payload.length === 4 &&
+        bet.payload.every(isValidNumber) &&
+        new Set(bet.payload).size === 4
+      );
     case "red":
     case "black":
     case "odd":
@@ -51,6 +72,9 @@ function betWins(bet, result) {
   switch (bet.type) {
     case "straight":
       return bet.payload === result;
+    case "split":
+    case "corner":
+      return bet.payload.includes(result);
     case "red":
       return colorOf(result) === "red";
     case "black":
