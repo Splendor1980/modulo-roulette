@@ -233,6 +233,15 @@ a { color: var(--brass-light); }
   background: var(--felt-light);
   color: var(--bone);
 }
+.outside-row.dozens .cell.outside {
+  background: linear-gradient(155deg, rgba(201, 162, 39, 0.32), var(--felt-light));
+}
+.outside-row.columns .cell.outside {
+  background: linear-gradient(155deg, rgba(45, 212, 191, 0.26), var(--felt-light));
+}
+.outside-row.evens .cell.outside:not(.red):not(.black) {
+  background: linear-gradient(155deg, rgba(160, 130, 220, 0.28), var(--felt-light));
+}
 .outside-row { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 4px; }
 .outside-row.six { grid-template-columns: repeat(6, 1fr); }
 

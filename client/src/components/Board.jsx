@@ -114,17 +114,17 @@ export default function Board({ onBet, disabled, myBets = [] }) {
         ))}
       </div>
 
-      <div className="outside-row">
+      <div className="outside-row dozens">
         <div className="cell outside" onClick={() => !disabled && onBet("dozen", 1)}>1st 12<Marker amount={totals[betKey("dozen", 1)]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("dozen", 2)}>2nd 12<Marker amount={totals[betKey("dozen", 2)]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("dozen", 3)}>3rd 12<Marker amount={totals[betKey("dozen", 3)]} /></div>
       </div>
-      <div className="outside-row">
+      <div className="outside-row columns">
         <div className="cell outside" onClick={() => !disabled && onBet("column", 1)}>Column 1<Marker amount={totals[betKey("column", 1)]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("column", 2)}>Column 2<Marker amount={totals[betKey("column", 2)]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("column", 3)}>Column 3<Marker amount={totals[betKey("column", 3)]} /></div>
       </div>
-      <div className="outside-row six">
+      <div className="outside-row six evens">
         <div className="cell outside" onClick={() => !disabled && onBet("low")}>1–18<Marker amount={totals[betKey("low")]} /></div>
         <div className="cell outside" onClick={() => !disabled && onBet("even")}>Even<Marker amount={totals[betKey("even")]} /></div>
         <div className="cell outside red" onClick={() => !disabled && onBet("red")}>Red<Marker amount={totals[betKey("red")]} /></div>
