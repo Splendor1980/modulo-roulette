@@ -134,6 +134,7 @@ function renderSlices() {
           fontFamily="IBM Plex Mono, monospace"
           textAnchor="middle"
           dominantBaseline="middle"
+          transform={`rotate(${midAngle + 90}, ${lx}, ${ly})`}
         >
           {n}
         </text>

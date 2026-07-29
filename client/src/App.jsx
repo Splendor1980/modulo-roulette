@@ -12,6 +12,35 @@ function randomName() {
   return `${ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]}${NOUNS[Math.floor(Math.random() * NOUNS.length)]}`;
 }
 
+function describeBet(bet) {
+  switch (bet.type) {
+    case "straight":
+      return `Straight ${bet.payload}`;
+    case "split":
+      return `Split ${bet.payload.join("/")}`;
+    case "corner":
+      return `Corner ${bet.payload.join("/")}`;
+    case "dozen":
+      return `Dozen ${bet.payload}`;
+    case "column":
+      return `Column ${bet.payload}`;
+    case "red":
+      return "Red";
+    case "black":
+      return "Black";
+    case "odd":
+      return "Odd";
+    case "even":
+      return "Even";
+    case "low":
+      return "1–18";
+    case "high":
+      return "19–36";
+    default:
+      return bet.type;
+  }
+}
+
 export default function App() {
   const [state, setState] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -49,10 +78,16 @@ export default function App() {
       setLastResult(r);
       setSpinning(true);
       const mine = r.payouts?.find((p) => p.userId === myUserIdRef.current);
-      const won = Boolean(mine && mine.net > 0);
+      const winningBets = mine?.details?.filter((d) => d.win) || [];
+      const won = winningBets.length > 0;
       setWonLastRound(won);
       if (won) {
-        setToast({ message: `🎉 Won ${mine.net} chips on ${r.number} (${r.color})`, type: "win" });
+        const desc = winningBets.map(describeBet).join(", ");
+        const netStr = mine.net >= 0 ? `net +${mine.net}` : `net ${mine.net}`;
+        setToast({
+          message: `🎉 ${desc} hit on ${r.number} (${r.color}) — ${netStr} chips this round`,
+          type: "win"
+        });
       }
     });
 
