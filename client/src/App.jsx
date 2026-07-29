@@ -87,9 +87,13 @@ export default function App() {
       if (p.phase === "betting") setLastRoundOutcome(null); // clear once a new round opens
     });
     socket.on("spin_result", (r) => {
+      // eslint-disable-next-line no-console
+      console.log("[modulo debug] spin_result received:", r);
       setLastResult(r);
       setSpinning(true);
       const mine = r.payouts?.find((p) => p.userId === myUserIdRef.current);
+      // eslint-disable-next-line no-console
+      console.log("[modulo debug] myUserId:", myUserIdRef.current, "matched payout:", mine);
       const winningBets = mine?.details?.filter((d) => d.win) || [];
       const won = winningBets.length > 0;
       setWonLastRound(won);
