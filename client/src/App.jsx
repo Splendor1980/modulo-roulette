@@ -83,8 +83,10 @@ export default function App() {
     socket.on("player_list", (p) => setPlayers(p));
     socket.on("phase_change", (p) => {
       setState((prev) => (prev ? { ...prev, ...p } : prev));
-      if (p.phase === "spinning") setMyBets([]);
-      if (p.phase === "betting") setLastRoundOutcome(null); // clear once a new round opens
+      if (p.phase === "betting") {
+        setMyBets([]); // fresh round — clear the board for new bets
+        setLastRoundOutcome(null);
+      }
     });
     socket.on("spin_result", (r) => {
       setLastResult(r);
@@ -170,7 +172,7 @@ export default function App() {
         <div>
           <div className="panel">
             <Wheel spinning={spinning} resultNumber={lastResult?.number} celebrate={wonLastRound} />
-            <div className="phase-banner">
+            <div className={`phase-banner phase-${phase}`}>
               phase: <strong>{phase}</strong> · <span className="clock">{secondsLeft}s</span>
               {lastResult && (
                 <>

@@ -487,3 +487,11 @@ a { color: var(--brass-light); }
   border-color: var(--teal);
   box-shadow: 0 0 12px rgba(45, 212, 191, 0.25);
 }
+
+.phase-betting strong { color: var(--verify); }
+.phase-spinning strong { color: var(--brass-light); animation: pulse-spin 0.9s ease-in-out infinite; }
+.phase-result strong { color: var(--teal); }
+@keyframes pulse-spin {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
