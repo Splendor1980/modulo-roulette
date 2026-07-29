@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket.js";
 import Wheel from "./components/Wheel.jsx";
 import Board from "./components/Board.jsx";
@@ -22,12 +22,17 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [spinning, setSpinning] = useState(false);
   const [myBets, setMyBets] = useState([]);
+  const [myUserId, setMyUserId] = useState(null);
+  const myUserIdRef = useRef(null);
+  const [wonLastRound, setWonLastRound] = useState(false);
 
   useEffect(() => {
     socket.connect();
     socket.emit("join_table", { tableId: "table-1", name: randomName() }, (ack) => {
       if (ack?.ok) {
         setBalance(ack.balance);
+        setMyUserId(ack.userId);
+        myUserIdRef.current = ack.userId;
         setState(ack.state);
       } else {
         setToast(ack?.error || "could not join table");
@@ -43,6 +48,8 @@ export default function App() {
     socket.on("spin_result", (r) => {
       setLastResult(r);
       setSpinning(true);
+      const mine = r.payouts?.find((p) => p.userId === myUserIdRef.current);
+      setWonLastRound(Boolean(mine && mine.net > 0));
     });
 
     return () => {
@@ -101,7 +108,7 @@ export default function App() {
       <div className="layout">
         <div>
           <div className="panel">
-            <Wheel spinning={spinning} resultNumber={lastResult?.number} />
+            <Wheel spinning={spinning} resultNumber={lastResult?.number} celebrate={wonLastRound} />
             <div className="phase-banner">
               phase: <strong>{phase}</strong> · <span className="clock">{secondsLeft}s</span>
               {lastResult && (

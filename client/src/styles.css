@@ -5,8 +5,10 @@
   --line: #2a4038;
   --brass: #c9a227;
   --brass-light: #e4c767;
-  --verify: #4fa37d;
-  --signal: #b2434e;
+  --verify: #2fbf82;
+  --signal: #e0475a;
+  --noir: #241b38;
+  --teal: #2dd4bf;
   --bone: #ede8dd;
   --bone-dim: #a39c8c;
 
@@ -23,7 +25,10 @@ html, body, #root {
 }
 
 body {
-  background: radial-gradient(ellipse at top, #101a17 0%, var(--ink) 60%);
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -5%, rgba(201,162,39,0.10), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 85% 0%, rgba(45,212,191,0.08), transparent 60%),
+    radial-gradient(ellipse at top, #101a17 0%, var(--ink) 60%);
   color: var(--bone);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -221,9 +226,9 @@ a { color: var(--brass-light); }
   box-shadow: inset 0 -2px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .cell:hover { border-color: var(--brass); transform: translateY(-1px); }
-.cell.red { background: var(--signal); }
-.cell.black { background: #16261f; }
-.cell.green { background: var(--verify); color: var(--ink); grid-row: span 3; display: flex; align-items: center; justify-content: center; }
+.cell.red { background: linear-gradient(155deg, var(--signal), #b23244); }
+.cell.black { background: linear-gradient(155deg, #322650, var(--noir)); }
+.cell.green { background: linear-gradient(155deg, #3fe0a0, var(--verify)); color: var(--ink); grid-row: span 3; display: flex; align-items: center; justify-content: center; }
 .cell.outside {
   background: var(--felt-light);
   color: var(--bone);
@@ -396,4 +401,31 @@ a { color: var(--brass-light); }
   bottom: 50%;
   transform: translate(50%, 50%);
   font-size: 0.42rem;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+.confetti-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  animation: confetti-pop 1.1s ease-out forwards;
+}
+@keyframes confetti-pop {
+  0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.6); opacity: 1; }
+  100% {
+    transform:
+      translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      rotate(var(--rot))
+      scale(1);
+    opacity: 0;
+  }
 }

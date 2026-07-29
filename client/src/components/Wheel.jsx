@@ -10,14 +10,32 @@ const SLICE = 360 / WHEEL_ORDER.length;
 
 function colorFor(n) {
   if (n === 0) return "var(--verify)";
-  return RED_NUMBERS.has(n) ? "var(--signal)" : "#16261f";
+  return RED_NUMBERS.has(n) ? "var(--signal)" : "var(--noir)";
 }
 
-export default function Wheel({ spinning, resultNumber }) {
+const CONFETTI_COLORS = ["var(--brass)", "var(--brass-light)", "var(--teal)", "var(--verify)", "var(--signal)"];
+
+function makeConfetti() {
+  return Array.from({ length: 22 }, (_, i) => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 70 + Math.random() * 90;
+    return {
+      id: i,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      dx: `${Math.cos(angle) * dist}px`,
+      dy: `${Math.sin(angle) * dist}px`,
+      rot: `${Math.round(Math.random() * 540 - 270)}deg`,
+      delay: `${Math.random() * 0.15}s`
+    };
+  });
+}
+
+export default function Wheel({ spinning, resultNumber, celebrate }) {
   const rotationRef = useRef(0);
   const ballRotationRef = useRef(0);
   const [rotation, setRotation] = useState(0);
   const [ballRotation, setBallRotation] = useState(0);
+  const [confetti, setConfetti] = useState([]);
 
   useEffect(() => {
     if (!spinning || resultNumber == null) return;
@@ -32,17 +50,43 @@ export default function Wheel({ spinning, resultNumber }) {
     rotationRef.current = next;
     setRotation(next);
 
-    // Ball spins the opposite direction, faster, and settles near the
-    // pointer — a rough approximation of a real ball losing momentum.
+    // The wheel itself brings the winning number under the fixed pointer.
+    // The ball just needs to consistently settle at that same fixed point
+    // (angle 0) after spinning fast the opposite direction — it should
+    // NOT depend on the result, or it visually lands in the wrong place.
     const bPrev = ballRotationRef.current;
-    const bNext = bPrev - (spins + 3) * 360 - (360 - targetWithinCircle);
+    const bPrevMod = ((bPrev % 360) + 360) % 360;
+    const bNext = bPrev - bPrevMod - (spins + 3) * 360;
     ballRotationRef.current = bNext;
     setBallRotation(bNext);
+
+    if (celebrate) {
+      setConfetti(makeConfetti());
+      const clearId = setTimeout(() => setConfetti([]), 1300);
+      return () => clearTimeout(clearId);
+    }
   }, [spinning, resultNumber]);
 
   return (
     <div className="wheel-wrap">
       <div className="wheel-pointer" />
+      {confetti.length > 0 && (
+        <div className="confetti-layer">
+          {confetti.map((c) => (
+            <span
+              key={c.id}
+              className="confetti-dot"
+              style={{
+                background: c.color,
+                animationDelay: c.delay,
+                "--dx": c.dx,
+                "--dy": c.dy,
+                "--rot": c.rot
+              }}
+            />
+          ))}
+        </div>
+      )}
       <div className="wheel-rail">
         <svg
           className="wheel-svg"
