@@ -101,17 +101,6 @@ export default function App() {
       } else {
         setLastRoundOutcome(null);
       }
-      if (netPositive) {
-        setToast({
-          message: `🎉 ${winningBets.map(describeBet).join(", ")} hit on ${r.number} (${r.color}) — net +${mine.net} chips`,
-          type: "win"
-        });
-      } else if (anyHit) {
-        setToast({
-          message: `${winningBets.map(describeBet).join(", ")} hit on ${r.number} (${r.color}), but net ${mine.net} chips this round`,
-          type: "info"
-        });
-      }
     });
 
     return () => {
@@ -171,7 +160,13 @@ export default function App() {
       <div className="layout">
         <div>
           <div className="panel">
-            <Wheel spinning={spinning} resultNumber={lastResult?.number} celebrate={wonLastRound} />
+            <Wheel
+              spinning={spinning}
+              resultNumber={lastResult?.number}
+              celebrate={wonLastRound}
+              roundKey={lastResult?.round}
+              outcome={lastRoundOutcome}
+            />
             <div className={`phase-banner phase-${phase}`}>
               phase: <strong>{phase}</strong> · <span className="clock">{secondsLeft}s</span>
               {lastResult && (

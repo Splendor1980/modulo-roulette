@@ -30,18 +30,25 @@ function makeConfetti() {
   });
 }
 
-export default function Wheel({ spinning, resultNumber, celebrate }) {
+export default function Wheel({ spinning, resultNumber, celebrate, roundKey, outcome }) {
   const rotationRef = useRef(0);
   const ballRotationRef = useRef(0);
   const [rotation, setRotation] = useState(0);
   const [ballRotation, setBallRotation] = useState(0);
   const [confetti, setConfetti] = useState([]);
+  const [banner, setBanner] = useState(null); // { text, positive } | null
 
   useEffect(() => {
-    if (!spinning || resultNumber == null) return;
+    // Keyed on roundKey (a monotonically increasing round number) instead of
+    // resultNumber/spinning — those are primitives that can repeat between
+    // rounds (e.g. the same number landing twice in a row), and React skips
+    // re-running an effect whose dependency values didn't change. roundKey
+    // never repeats, so this guarantees every round actually animates.
+    if (!spinning || resultNumber == null || roundKey == null) return;
+
     const index = WHEEL_ORDER.indexOf(resultNumber);
     const targetWithinCircle = 360 - (index * SLICE + SLICE / 2);
-    const spins = 5; // full extra spins for effect
+    const spins = 5;
     const prev = rotationRef.current;
     const prevMod = ((prev % 360) + 360) % 360;
     let delta = targetWithinCircle - prevMod;
@@ -50,22 +57,30 @@ export default function Wheel({ spinning, resultNumber, celebrate }) {
     rotationRef.current = next;
     setRotation(next);
 
-    // The wheel itself brings the winning number under the fixed pointer.
-    // The ball just needs to consistently settle at that same fixed point
-    // (angle 0) after spinning fast the opposite direction — it should
-    // NOT depend on the result, or it visually lands in the wrong place.
     const bPrev = ballRotationRef.current;
     const bPrevMod = ((bPrev % 360) + 360) % 360;
     const bNext = bPrev - bPrevMod - (spins + 3) * 360;
     ballRotationRef.current = bNext;
     setBallRotation(bNext);
 
+    let confettiTimer;
+    let bannerTimer;
     if (celebrate) {
       setConfetti(makeConfetti());
-      const clearId = setTimeout(() => setConfetti([]), 1300);
-      return () => clearTimeout(clearId);
+      confettiTimer = setTimeout(() => setConfetti([]), 1300);
     }
-  }, [spinning, resultNumber]);
+    if (outcome) {
+      setBanner({
+        text: `${outcome.net >= 0 ? "+" : ""}${outcome.net}`,
+        positive: outcome.netPositive
+      });
+      bannerTimer = setTimeout(() => setBanner(null), 2200);
+    }
+    return () => {
+      clearTimeout(confettiTimer);
+      clearTimeout(bannerTimer);
+    };
+  }, [roundKey]);
 
   return (
     <div className="wheel-wrap">
@@ -87,6 +102,12 @@ export default function Wheel({ spinning, resultNumber, celebrate }) {
           ))}
         </div>
       )}
+      {banner && (
+        <div className={`outcome-banner ${banner.positive ? "positive" : "negative"}`}>
+          {banner.positive ? "YOU WON" : "YOU LOST"}
+          <span className="outcome-banner-amount">{banner.text} chips</span>
+        </div>
+      )}
       <div className="wheel-rail">
         <svg
           className="wheel-svg"
@@ -98,7 +119,7 @@ export default function Wheel({ spinning, resultNumber, celebrate }) {
           {renderSlices()}
         </svg>
         <div className="ball-track" style={{ transform: `rotate(${ballRotation}deg)` }}>
-          <div className="ball" style={{ transform: "translate(-4px, -128px)" }} />
+          <div className="ball" />
         </div>
       </div>
     </div>

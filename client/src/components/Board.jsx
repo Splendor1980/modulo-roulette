@@ -79,76 +79,79 @@ export default function Board({ onBet, disabled, myBets = [] }) {
   }));
 
   return (
-    <div>
-      <div className="board">
-        <div
-          className="cell green"
-          style={{ gridColumn: 1, gridRow: "1 / -1" }}
-          onClick={() => !disabled && onBet("straight", 0)}
-        >
-          0
-          <Marker amount={totals[betKey("straight", 0)]} />
+    <div className="table-scroll">
+      <div className="table-surface">
+        <div className="board">
+          <div
+            className="cell green"
+            style={{ gridColumn: 1, gridRow: "1 / -1" }}
+            onClick={() => !disabled && onBet("straight", 0)}
+          >
+            0
+            <Marker amount={totals[betKey("straight", 0)]} />
+          </div>
+          {numberCells.map(({ n, gridColumn, gridRow }) => (
+            <div
+              key={n}
+              className={`cell ${colorClass(n)}`}
+              style={{ gridColumn, gridRow }}
+              onClick={() => !disabled && onBet("straight", n)}
+            >
+              {n}
+              <Marker amount={totals[betKey("straight", n)]} />
+            </div>
+          ))}
+          {splits.map(({ payload, gridColumn, gridRow }) => (
+            <div
+              key={`split-${payload.join("-")}`}
+              className="hotspot"
+              title={`Split ${payload.join(" / ")}`}
+              style={{ gridColumn, gridRow }}
+              onClick={() => !disabled && onBet("split", payload)}
+            >
+              <Marker amount={totals[betKey("split", payload)]} />
+            </div>
+          ))}
+          {corners.map(({ payload, gridColumn, gridRow }) => (
+            <div
+              key={`corner-${payload.join("-")}`}
+              className="hotspot corner"
+              title={`Corner ${payload.join(" / ")}`}
+              style={{ gridColumn, gridRow }}
+              onClick={() => !disabled && onBet("corner", payload)}
+            >
+              <Marker amount={totals[betKey("corner", payload)]} />
+            </div>
+          ))}
+          {columnStrip.map(({ column, gridColumn, gridRow }) => (
+            <div
+              key={`col-${column}`}
+              className="cell col-strip"
+              title={`Column ${column} (2:1)`}
+              style={{ gridColumn, gridRow }}
+              onClick={() => !disabled && onBet("column", column)}
+            >
+              2:1
+              <Marker amount={totals[betKey("column", column)]} />
+            </div>
+          ))}
         </div>
-        {numberCells.map(({ n, gridColumn, gridRow }) => (
-          <div
-            key={n}
-            className={`cell ${colorClass(n)}`}
-            style={{ gridColumn, gridRow }}
-            onClick={() => !disabled && onBet("straight", n)}
-          >
-            {n}
-            <Marker amount={totals[betKey("straight", n)]} />
-          </div>
-        ))}
-        {splits.map(({ payload, gridColumn, gridRow }) => (
-          <div
-            key={`split-${payload.join("-")}`}
-            className="hotspot"
-            title={`Split ${payload.join(" / ")}`}
-            style={{ gridColumn, gridRow }}
-            onClick={() => !disabled && onBet("split", payload)}
-          >
-            <Marker amount={totals[betKey("split", payload)]} />
-          </div>
-        ))}
-        {corners.map(({ payload, gridColumn, gridRow }) => (
-          <div
-            key={`corner-${payload.join("-")}`}
-            className="hotspot corner"
-            title={`Corner ${payload.join(" / ")}`}
-            style={{ gridColumn, gridRow }}
-            onClick={() => !disabled && onBet("corner", payload)}
-          >
-            <Marker amount={totals[betKey("corner", payload)]} />
-          </div>
-        ))}
-        {columnStrip.map(({ column, gridColumn, gridRow }) => (
-          <div
-            key={`col-${column}`}
-            className="cell col-strip"
-            title={`Column ${column} (2:1)`}
-            style={{ gridColumn, gridRow }}
-            onClick={() => !disabled && onBet("column", column)}
-          >
-            2:1
-            <Marker amount={totals[betKey("column", column)]} />
-          </div>
-        ))}
-      </div>
 
-      <div className="outside-row dozens">
-        <div className="cell outside" onClick={() => !disabled && onBet("dozen", 1)}>1st 12<Marker amount={totals[betKey("dozen", 1)]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("dozen", 2)}>2nd 12<Marker amount={totals[betKey("dozen", 2)]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("dozen", 3)}>3rd 12<Marker amount={totals[betKey("dozen", 3)]} /></div>
+        <div className="outside-row dozens">
+          <div className="cell outside" onClick={() => !disabled && onBet("dozen", 1)}>1st 12<Marker amount={totals[betKey("dozen", 1)]} /></div>
+          <div className="cell outside" onClick={() => !disabled && onBet("dozen", 2)}>2nd 12<Marker amount={totals[betKey("dozen", 2)]} /></div>
+          <div className="cell outside" onClick={() => !disabled && onBet("dozen", 3)}>3rd 12<Marker amount={totals[betKey("dozen", 3)]} /></div>
+        </div>
+        <div className="outside-row six evens">
+          <div className="cell outside" onClick={() => !disabled && onBet("low")}>1–18<Marker amount={totals[betKey("low")]} /></div>
+          <div className="cell outside" onClick={() => !disabled && onBet("even")}>Even<Marker amount={totals[betKey("even")]} /></div>
+          <div className="cell outside red" onClick={() => !disabled && onBet("red")}>Red<Marker amount={totals[betKey("red")]} /></div>
+          <div className="cell outside black" onClick={() => !disabled && onBet("black")}>Black<Marker amount={totals[betKey("black")]} /></div>
+          <div className="cell outside" onClick={() => !disabled && onBet("odd")}>Odd<Marker amount={totals[betKey("odd")]} /></div>
+          <div className="cell outside" onClick={() => !disabled && onBet("high")}>19–36<Marker amount={totals[betKey("high")]} /></div>
+        </div>
       </div>
-      <div className="outside-row six evens">
-        <div className="cell outside" onClick={() => !disabled && onBet("low")}>1–18<Marker amount={totals[betKey("low")]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("even")}>Even<Marker amount={totals[betKey("even")]} /></div>
-        <div className="cell outside red" onClick={() => !disabled && onBet("red")}>Red<Marker amount={totals[betKey("red")]} /></div>
-        <div className="cell outside black" onClick={() => !disabled && onBet("black")}>Black<Marker amount={totals[betKey("black")]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("odd")}>Odd<Marker amount={totals[betKey("odd")]} /></div>
-        <div className="cell outside" onClick={() => !disabled && onBet("high")}>19–36<Marker amount={totals[betKey("high")]} /></div>
-      </div>
+      <div className="scroll-hint">← swipe to see the whole table →</div>
     </div>
   );
 }
