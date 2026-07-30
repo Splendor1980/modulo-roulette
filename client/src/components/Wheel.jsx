@@ -31,6 +31,11 @@ function makeConfetti() {
 }
 
 const SETTLE_MS = 1000; // short final decel once the result is known
+const SETTLE_EASING = "cubic-bezier(0.1, 0.7, 0.15, 1)";
+const SPIN_MS = 6500; // deliberately much longer than the ~4s spinning phase so
+// this stage is always still actively moving (never visibly at rest) by the
+// time stage B interrupts it with the real result — that early stop-then-
+// restart is what read as "spins twice".
 const REVEAL_DELAY_MS = SETTLE_MS + 80; // let the settle transition actually finish before showing the result
 
 export default function Wheel({ spinning, resultNumber, celebrate, roundKey, outcome, spinTrigger }) {
@@ -38,23 +43,24 @@ export default function Wheel({ spinning, resultNumber, celebrate, roundKey, out
   const ballRotationRef = useRef(0);
   const [rotation, setRotation] = useState(0);
   const [ballRotation, setBallRotation] = useState(0);
-  const [transitionMs, setTransitionMs] = useState(3800);
+  const [motion, setMotion] = useState({ ms: SPIN_MS, easing: "linear" });
   const [confetti, setConfetti] = useState([]);
   const [banner, setBanner] = useState(null); // { text, positive } | null
 
   // Stage A — the instant the "spinning" phase begins (before we even know
-  // the result), spin fast in an arbitrary direction/amount so the wheel is
-  // visibly moving for the whole suspense window, not sitting still.
+  // the result), spin fast and steady (linear speed, long duration) so the
+  // wheel is visibly moving the whole suspense window and never coasts to a
+  // stop on its own before the real result interrupts it.
   useEffect(() => {
     if (spinTrigger == null) return;
-    setTransitionMs(3800);
+    setMotion({ ms: SPIN_MS, easing: "linear" });
     const prev = rotationRef.current;
-    const next = prev + 1600 + Math.random() * 500;
+    const next = prev + 2600 + Math.random() * 500;
     rotationRef.current = next;
     setRotation(next);
 
     const bPrev = ballRotationRef.current;
-    const bNext = bPrev - (1600 + Math.random() * 500);
+    const bNext = bPrev - (2600 + Math.random() * 500);
     ballRotationRef.current = bNext;
     setBallRotation(bNext);
   }, [spinTrigger]);
@@ -72,7 +78,7 @@ export default function Wheel({ spinning, resultNumber, celebrate, roundKey, out
     // never repeats, so this guarantees every round actually animates.
     if (!spinning || resultNumber == null || roundKey == null) return;
 
-    setTransitionMs(SETTLE_MS);
+    setMotion({ ms: SETTLE_MS, easing: SETTLE_EASING });
     const index = WHEEL_ORDER.indexOf(resultNumber);
     const targetWithinCircle = 360 - (index * SLICE + SLICE / 2);
     const prev = rotationRef.current;
@@ -138,13 +144,21 @@ export default function Wheel({ spinning, resultNumber, celebrate, roundKey, out
           width="264"
           height="264"
           viewBox="0 0 280 280"
-          style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${transitionMs}ms` }}
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transitionDuration: `${motion.ms}ms`,
+            transitionTimingFunction: motion.easing
+          }}
         >
           {renderSlices()}
         </svg>
         <div
           className="ball-track"
-          style={{ transform: `rotate(${ballRotation}deg)`, transitionDuration: `${transitionMs}ms` }}
+          style={{
+            transform: `rotate(${ballRotation}deg)`,
+            transitionDuration: `${motion.ms}ms`,
+            transitionTimingFunction: motion.easing
+          }}
         >
           <div className="ball" />
         </div>
