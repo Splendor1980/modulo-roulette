@@ -30,14 +30,40 @@ function makeConfetti() {
   });
 }
 
-export default function Wheel({ spinning, resultNumber, celebrate, roundKey, outcome }) {
+const SETTLE_MS = 1000; // short final decel once the result is known
+const REVEAL_DELAY_MS = SETTLE_MS + 80; // let the settle transition actually finish before showing the result
+
+export default function Wheel({ spinning, resultNumber, celebrate, roundKey, outcome, spinTrigger }) {
   const rotationRef = useRef(0);
   const ballRotationRef = useRef(0);
   const [rotation, setRotation] = useState(0);
   const [ballRotation, setBallRotation] = useState(0);
+  const [transitionMs, setTransitionMs] = useState(3800);
   const [confetti, setConfetti] = useState([]);
   const [banner, setBanner] = useState(null); // { text, positive } | null
 
+  // Stage A — the instant the "spinning" phase begins (before we even know
+  // the result), spin fast in an arbitrary direction/amount so the wheel is
+  // visibly moving for the whole suspense window, not sitting still.
+  useEffect(() => {
+    if (spinTrigger == null) return;
+    setTransitionMs(3800);
+    const prev = rotationRef.current;
+    const next = prev + 1600 + Math.random() * 500;
+    rotationRef.current = next;
+    setRotation(next);
+
+    const bPrev = ballRotationRef.current;
+    const bNext = bPrev - (1600 + Math.random() * 500);
+    ballRotationRef.current = bNext;
+    setBallRotation(bNext);
+  }, [spinTrigger]);
+
+  // Stage B — the moment the real result arrives, do a short, precise
+  // "decelerate into place" from wherever stage A left off, and only reveal
+  // the banner/confetti once that short settle transition has actually had
+  // time to finish (so the announcement lines up with the ball really
+  // stopping, not with the network event that carried the data).
   useEffect(() => {
     // Keyed on roundKey (a monotonically increasing round number) instead of
     // resultNumber/spinning — those are primitives that can repeat between
@@ -46,40 +72,38 @@ export default function Wheel({ spinning, resultNumber, celebrate, roundKey, out
     // never repeats, so this guarantees every round actually animates.
     if (!spinning || resultNumber == null || roundKey == null) return;
 
+    setTransitionMs(SETTLE_MS);
     const index = WHEEL_ORDER.indexOf(resultNumber);
     const targetWithinCircle = 360 - (index * SLICE + SLICE / 2);
-    const spins = 5;
     const prev = rotationRef.current;
     const prevMod = ((prev % 360) + 360) % 360;
     let delta = targetWithinCircle - prevMod;
     if (delta < 0) delta += 360;
-    const next = prev + spins * 360 + delta;
+    const next = prev + delta;
     rotationRef.current = next;
     setRotation(next);
 
     const bPrev = ballRotationRef.current;
     const bPrevMod = ((bPrev % 360) + 360) % 360;
-    const bNext = bPrev - bPrevMod - (spins + 3) * 360;
+    const bNext = bPrev - bPrevMod - 360;
     ballRotationRef.current = bNext;
     setBallRotation(bNext);
 
-    let confettiTimer;
-    let bannerTimer;
-    if (celebrate) {
-      setConfetti(makeConfetti());
-      confettiTimer = setTimeout(() => setConfetti([]), 1300);
-    }
-    if (outcome) {
-      setBanner({
-        text: `${outcome.net >= 0 ? "+" : ""}${outcome.net}`,
-        positive: outcome.netPositive
-      });
-      bannerTimer = setTimeout(() => setBanner(null), 2200);
-    }
-    return () => {
-      clearTimeout(confettiTimer);
-      clearTimeout(bannerTimer);
-    };
+    const revealTimer = setTimeout(() => {
+      if (celebrate) {
+        setConfetti(makeConfetti());
+        setTimeout(() => setConfetti([]), 1300);
+      }
+      if (outcome) {
+        setBanner({
+          text: `${outcome.net >= 0 ? "+" : ""}${outcome.net}`,
+          positive: outcome.netPositive
+        });
+        setTimeout(() => setBanner(null), 2200);
+      }
+    }, REVEAL_DELAY_MS);
+
+    return () => clearTimeout(revealTimer);
   }, [roundKey]);
 
   return (
@@ -114,11 +138,14 @@ export default function Wheel({ spinning, resultNumber, celebrate, roundKey, out
           width="264"
           height="264"
           viewBox="0 0 280 280"
-          style={{ transform: `rotate(${rotation}deg)` }}
+          style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${transitionMs}ms` }}
         >
           {renderSlices()}
         </svg>
-        <div className="ball-track" style={{ transform: `rotate(${ballRotation}deg)` }}>
+        <div
+          className="ball-track"
+          style={{ transform: `rotate(${ballRotation}deg)`, transitionDuration: `${transitionMs}ms` }}
+        >
           <div className="ball" />
         </div>
       </div>

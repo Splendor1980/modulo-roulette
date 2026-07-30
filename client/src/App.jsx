@@ -55,6 +55,7 @@ export default function App() {
   const myUserIdRef = useRef(null);
   const [wonLastRound, setWonLastRound] = useState(false);
   const [lastRoundOutcome, setLastRoundOutcome] = useState(null); // { net, desc } | null
+  const [spinTrigger, setSpinTrigger] = useState(0);
 
   useEffect(() => {
     function join() {
@@ -83,6 +84,7 @@ export default function App() {
     socket.on("player_list", (p) => setPlayers(p));
     socket.on("phase_change", (p) => {
       setState((prev) => (prev ? { ...prev, ...p } : prev));
+      if (p.phase === "spinning") setSpinTrigger((n) => n + 1);
       if (p.phase === "betting") {
         setMyBets([]); // fresh round — clear the board for new bets
         setLastRoundOutcome(null);
@@ -166,6 +168,7 @@ export default function App() {
               celebrate={wonLastRound}
               roundKey={lastResult?.round}
               outcome={lastRoundOutcome}
+              spinTrigger={spinTrigger}
             />
             <div className={`phase-banner phase-${phase}`}>
               phase: <strong>{phase}</strong> · <span className="clock">{secondsLeft}s</span>
